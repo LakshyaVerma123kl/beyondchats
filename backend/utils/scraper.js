@@ -1,44 +1,47 @@
-const puppeteer = require("puppeteer");
+const axios = require("axios");
+const cheerio = require("cheerio");
 
 const scrapeArticles = async () => {
-  let browser;
   try {
-    console.log("🚀 Launching Puppeteer...");
-    browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox"],
+    console.log("🚀 Starting scrape with Axios/Cheerio...");
+
+    // Fetch the blogs listing page
+    const response = await axios.get("https://beyondchats.com/blogs/", {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      timeout: 30000,
     });
-    const page = await browser.newPage();
 
-    // 1. Go to the blogs listing page
-    await page.goto("https://beyondchats.com/blogs/", {
-      waitUntil: "networkidle2",
-      timeout: 60000,
-    });
+    const $ = cheerio.load(response.data);
+    const articleLinks = [];
 
-    // 2. Extract article URLs and titles
-    const articleLinks = await page.evaluate(() => {
-      const data = [];
-      const links = document.querySelectorAll("a");
+    // Extract article links
+    $("a").each((i, link) => {
+      const href = $(link).attr("href");
+      const title = $(link).text().trim();
 
-      links.forEach((link) => {
-        const href = link.href;
-        const title = link.innerText.trim();
+      // Filter for valid blog links
+      if (
+        href &&
+        href.includes("/blogs/") &&
+        !href.includes("#") &&
+        title.length > 20 &&
+        !title.toLowerCase().includes("read more")
+      ) {
+        // Convert relative URLs to absolute
+        const fullUrl = href.startsWith("http")
+          ? href
+          : `https://beyondchats.com${href.startsWith("/") ? "" : "/"}${href}`;
 
-        // STRICT FILTERS:
-        if (
-          href.includes("/blogs/") &&
-          !href.includes("#") &&
-          title.length > 20 &&
-          !title.toLowerCase().includes("read more")
-        ) {
-          data.push({
-            title: title,
-            url: href,
-          });
-        }
-      });
-      return data;
+        articleLinks.push({
+          title: title,
+          url: fullUrl,
+        });
+      }
     });
 
     // Deduplicate
@@ -48,12 +51,12 @@ const scrapeArticles = async () => {
 
     console.log(`📋 Found ${uniqueLinks.length} unique article links`);
 
-    // 3. Visit each article page and scrape content
+    // Scrape content from each article
     const articles = [];
     const maxArticles = 5;
 
     for (let i = 0; i < Math.min(uniqueLinks.length, maxArticles); i++) {
-      const link = uniqueLinks[uniqueLinks.length - 1 - i]; // Get oldest first (reverse)
+      const link = uniqueLinks[uniqueLinks.length - 1 - i]; // Get oldest first
 
       try {
         console.log(
@@ -63,81 +66,72 @@ const scrapeArticles = async () => {
           )}...`
         );
 
-        await page.goto(link.url, {
-          waitUntil: "domcontentloaded",
+        const articleResponse = await axios.get(link.url, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            Accept:
+              "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          },
           timeout: 30000,
         });
 
-        // Wait a bit for content to load
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const $article = cheerio.load(articleResponse.data);
 
-        // Extract content from the article page
-        const content = await page.evaluate(() => {
-          // Remove unwanted elements
-          const unwantedSelectors = [
-            "script",
-            "style",
-            "nav",
-            "header",
-            "footer",
-            ".sidebar",
-            ".menu",
-            ".advertisement",
-            ".ad",
+        // Remove unwanted elements
+        $article(
+          "script, style, nav, header, footer, .sidebar, .menu, .advertisement, .ad"
+        ).remove();
+
+        let content = "";
+
+        // Strategy 1: Look for article tag
+        if ($article("article").length > 0) {
+          content = $article("article").text();
+        }
+
+        // Strategy 2: Look for main content area
+        if (!content || content.length < 200) {
+          const selectors = [
+            "main",
+            ".main-content",
+            ".content",
+            ".post-content",
+            ".article-content",
+            ".blog-content",
+            ".entry-content",
+            '[role="main"]',
           ];
 
-          unwantedSelectors.forEach((selector) => {
-            document.querySelectorAll(selector).forEach((el) => el.remove());
-          });
-
-          // Try multiple selectors to find article content
-          let text = "";
-
-          // Strategy 1: Look for article tag
-          const article = document.querySelector("article");
-          if (article) {
-            text = article.innerText;
-          }
-
-          // Strategy 2: Look for main content area
-          if (!text || text.length < 200) {
-            const selectors = [
-              "main",
-              ".main-content",
-              ".content",
-              ".post-content",
-              ".article-content",
-              ".blog-content",
-              ".entry-content",
-              '[role="main"]',
-            ];
-
-            for (const selector of selectors) {
-              const element = document.querySelector(selector);
-              if (element) {
-                const elementText = element.innerText;
-                if (elementText.length > text.length) {
-                  text = elementText;
-                }
+          for (const selector of selectors) {
+            const element = $article(selector);
+            if (element.length > 0) {
+              const elementText = element.text();
+              if (elementText.length > content.length) {
+                content = elementText;
               }
             }
           }
+        }
 
-          // Strategy 3: Get all paragraphs if nothing else worked
-          if (!text || text.length < 200) {
-            const paragraphs = Array.from(document.querySelectorAll("p"))
-              .map((p) => p.innerText.trim())
-              .filter((t) => t.length > 50);
-            text = paragraphs.join("\n\n");
-          }
+        // Strategy 3: Get all paragraphs
+        if (!content || content.length < 200) {
+          const paragraphs = [];
+          $article("p").each((idx, p) => {
+            const text = $article(p).text().trim();
+            if (text.length > 50) {
+              paragraphs.push(text);
+            }
+          });
+          content = paragraphs.join("\n\n");
+        }
 
-          // Clean up the text
-          return text
-            .replace(/\s+/g, " ")
-            .replace(/\n\s*\n/g, "\n\n")
-            .trim()
-            .slice(0, 3000); // Limit to first 3000 chars
-        });
+        // Clean up
+        content = content
+          .replace(/\s+/g, " ")
+          .replace(/\n\s*\n/g, "\n\n")
+          .trim()
+          .slice(0, 3000);
 
         if (content && content.length > 100) {
           articles.push({
@@ -148,11 +142,11 @@ const scrapeArticles = async () => {
           });
           console.log(`   ✅ Extracted ${content.length} characters`);
         } else {
-          // If we couldn't get content, still add the article with placeholder
+          // Add with placeholder if content extraction failed
           articles.push({
             title: link.title,
             original_url: link.url,
-            original_content: "Content could not be extracted from this page.",
+            original_content: "Content fetch pending",
             status: "pending",
           });
           console.log(
@@ -160,15 +154,15 @@ const scrapeArticles = async () => {
           );
         }
 
-        // Small delay to be polite
+        // Polite delay between requests
         await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
-        console.log(`   ❌ Error scraping this article: ${error.message}`);
+        console.log(`   ❌ Error scraping article: ${error.message}`);
         // Still add the article even if scraping failed
         articles.push({
           title: link.title,
           original_url: link.url,
-          original_content: `Error fetching content: ${error.message}`,
+          original_content: "Content fetch pending",
           status: "pending",
         });
       }
@@ -179,8 +173,6 @@ const scrapeArticles = async () => {
   } catch (error) {
     console.error("❌ Scraping Error:", error.message);
     return [];
-  } finally {
-    if (browser) await browser.close();
   }
 };
 
