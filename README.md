@@ -2,10 +2,9 @@
 
 > **Full Stack MERN Application** for automated content discovery, enhancement, and management using Generative AI
 
-[![Live Demo](https://img.shields.io/badge/Demo-Live-success?style=for-the-badge)](https://beyondchats-ochre.vercel.app)
-[![Video Walkthrough](https://img.shields.io/badge/Video-Watch-red?style=for-the-badge&logo=youtube)](YOUR_VIDEO_LINK)
+[![Live Demo](https://img.shields.io/badge/Demo-Live-success?style=for-the-badge)](https://beyondchats-m47l.vercel.app/)
 
-**Live Application:** [https://beyondchats-ochre.vercel.app](https://beyondchats-ochre.vercel.app)  
+**Live Application:** [https://beyondchats-m47l.vercel.app/](https://beyondchats-m47l.vercel.app/)  
 **API Backend:** [https://beyondchats-ochre.vercel.app/api/articles](https://beyondchats-ochre.vercel.app/api/articles)
 
 ---
@@ -161,7 +160,7 @@ graph TD
 
 ## 🌐 Live Demo Usage
 
-Visit the live application at **[https://beyondchats-ochre.vercel.app](https://beyondchats-ochre.vercel.app)**
+Visit the live application at **[https://beyondchats-m47l.vercel.app/](https://beyondchats-m47l.vercel.app/)**
 
 ### How to Use:
 
@@ -210,7 +209,7 @@ Visit the live application at **[https://beyondchats-ochre.vercel.app](https://b
 ### 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/beyondchats-assignment.git
+git clone https://github.com/LakshyaVerma123kl/beyondchats
 cd beyondchats-assignment
 ```
 
@@ -572,9 +571,9 @@ This project is submitted as part of the **BeyondChats Full Stack Internship Ass
 
 **Your Name**
 
-- Portfolio: [yourportfolio.com](https://yourportfolio.com)
-- LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
-- GitHub: [@yourusername](https://github.com/yourusername)
+- Portfolio: [yourportfolio.com](https://portfolio-six-peach-12.vercel.app/)
+- LinkedIn: [linkedin.com/in/yourprofile](https://www.linkedin.com/in/lakshya-verma-a79745255)
+- GitHub: [@yourusername](https://github.com/LakshyaVerma123kl)
 
 ---
 
@@ -592,15 +591,6 @@ This project is submitted as part of the **BeyondChats Full Stack Internship Ass
 
 For any questions or issues:
 
-- 📧 Email: your.email@example.com
-- 💬 Open an [Issue](https://github.com/yourusername/beyondchats-assignment/issues)
+- 📧 Email: lakshya123kl@gmail.com
 
 ---
-
-<div align="center">
-
-**⭐ Star this repository if you found it helpful!**
-
-Made with ❤️ for BeyondChats
-
-</div>
