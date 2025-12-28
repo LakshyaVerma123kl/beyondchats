@@ -10,8 +10,10 @@ export default function Dashboard() {
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Point to your running Backend
-  const API_URL = "http://localhost:5000/api/articles";
+  // --- DEPLOYMENT FIX ---
+  // Use Environment Variable for Vercel, fallback to localhost for development
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/articles";
 
   // 1. Fetch data on load
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function Dashboard() {
       setArticles(res.data);
     } catch (err) {
       console.error(
-        "API connection failed. Is backend running on port 5000?",
+        "API connection failed. Check NEXT_PUBLIC_API_URL in Vercel settings.",
         err
       );
     }
