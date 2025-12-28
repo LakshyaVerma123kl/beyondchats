@@ -9,30 +9,34 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [apiError, setApiError] = useState(null);
 
-  // --- DEPLOYMENT FIX ---
   // Use Environment Variable for Vercel, fallback to localhost for development
   const API_URL =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/articles";
 
-  // 1. Fetch data on load
+  // Fetch data on load
   useEffect(() => {
     fetchArticles();
   }, []);
 
   const fetchArticles = async () => {
     try {
+      setApiError(null);
       const res = await axios.get(API_URL);
-      setArticles(res.data);
+      // Ensure we always set an array
+      setArticles(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(
         "API connection failed. Check NEXT_PUBLIC_API_URL in Vercel settings.",
         err
       );
+      setApiError("Failed to connect to API. Please check your configuration.");
+      setArticles([]); // Ensure articles is always an array
     }
   };
 
-  // 2. Handle Scrape Button
+  // Handle Scrape Button
   const handleScrape = async () => {
     setLoading(true);
     try {
@@ -47,7 +51,7 @@ export default function Dashboard() {
     setLoading(false);
   };
 
-  // 2b. Process pending articles (triggers backend AI processing)
+  // Process pending articles (triggers backend AI processing)
   const handleProcessArticle = async (articleId) => {
     try {
       setLoading(true);
@@ -72,7 +76,7 @@ export default function Dashboard() {
     }
   };
 
-  // 3. Delete Article
+  // Delete Article
   const handleDelete = async (articleId) => {
     if (!confirm("Are you sure you want to delete this article?")) return;
 
@@ -95,7 +99,7 @@ export default function Dashboard() {
     setDeleteLoading(null);
   };
 
-  // 4. Download Article as HTML
+  // Download Article as HTML
   const handleDownload = (article) => {
     const htmlContent = `
 <!DOCTYPE html>
@@ -167,12 +171,12 @@ export default function Dashboard() {
     URL.revokeObjectURL(url);
   };
 
-  // 5. Filter articles by search query
+  // Filter articles by search query
   const filteredArticles = articles.filter((art) =>
-    art.title.toLowerCase().includes(searchQuery.toLowerCase())
+    art.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // 6. Stats calculation
+  // Stats calculation
   const stats = {
     total: articles.length,
     completed: articles.filter((a) => a.status === "completed").length,
@@ -197,6 +201,12 @@ export default function Dashboard() {
               <p className="text-xs text-slate-500">AI Article Manager</p>
             </div>
           </div>
+
+          {apiError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-xs text-red-700">{apiError}</p>
+            </div>
+          )}
 
           <button
             onClick={handleScrape}
@@ -300,7 +310,9 @@ export default function Dashboard() {
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {filteredArticles.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
-              <p className="text-sm">No articles found</p>
+              <p className="text-sm">
+                {apiError ? "Unable to load articles" : "No articles found"}
+              </p>
             </div>
           ) : (
             filteredArticles.map((art) => (
