@@ -11,14 +11,13 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [apiError, setApiError] = useState(null);
 
-  // Use Environment Variable for Vercel, fallback to localhost for development
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-  const API_URL = BASE_URL.includes("/api/articles")
-    ? BASE_URL
-    : `${BASE_URL}/api/articles`;
+  // Hardcoded API URL - works in both production and development
+  const API_URL =
+    typeof window !== "undefined" && window.location.hostname === "localhost"
+      ? "http://localhost:5000/api/articles"
+      : "https://beyondchats-ochre.vercel.app/api/articles";
 
-  // Debug log
-  console.log("🔍 API_URL:", API_URL);
+  console.log("🔍 Using API_URL:", API_URL);
 
   // Fetch data on load
   useEffect(() => {
