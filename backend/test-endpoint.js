@@ -1,6 +1,3 @@
-// Test script to verify the /process endpoint exists
-// Run this with: node test-endpoint.js
-
 const axios = require("axios");
 
 const API_URL = "http://localhost:5000/api/articles";
