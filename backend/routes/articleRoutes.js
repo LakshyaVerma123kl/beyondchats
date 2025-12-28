@@ -6,11 +6,16 @@ const {
   getArticleById,
   updateArticle,
   deleteArticle,
-  processArticle, // ← ADD THIS
+  processArticle,
 } = require("../controllers/articleController");
 
+// Scrape route - MUST be before /:id to avoid conflicts
 router.get("/scrape", triggerScrape);
-router.post("/process/:id", processArticle); // ← ADD THIS LINE
+
+// Process route
+router.post("/process/:id", processArticle);
+
+// CRUD routes
 router.get("/", getArticles);
 router.get("/:id", getArticleById);
 router.put("/:id", updateArticle);

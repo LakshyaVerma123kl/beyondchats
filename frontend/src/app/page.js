@@ -40,15 +40,17 @@ export default function Dashboard() {
   const handleScrape = async () => {
     setLoading(true);
     try {
-      await axios.get(`${API_URL}/scrape`);
-      setTimeout(() => {
+      const response = await axios.get(`${API_URL}/scrape`);
+      if (response.data.success) {
         fetchArticles();
-        alert("✅ Scraping complete!");
-      }, 2000);
+        alert(`✅ ${response.data.message}`);
+      }
     } catch (err) {
-      alert("❌ Scrape failed. Check backend console.");
+      console.error("Scrape error:", err);
+      alert("❌ Scrape failed: " + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Process pending articles (triggers backend AI processing)

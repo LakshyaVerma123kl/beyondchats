@@ -1,212 +1,606 @@
-# BeyondChats Full Stack AI Assignment
+# 🚀 BeyondChats AI Content Enhancement Platform
 
-**Live Demo:** [Insert Your Live Link Here or 'Running Locally']  
-**Video Walkthrough:** [Optional: Insert Link if you record one]
+> **Full Stack MERN Application** for automated content discovery, enhancement, and management using Generative AI
 
-## 🚀 Project Overview
+[![Live Demo](https://img.shields.io/badge/Demo-Live-success?style=for-the-badge)](https://beyondchats-ochre.vercel.app)
+[![Video Walkthrough](https://img.shields.io/badge/Video-Watch-red?style=for-the-badge&logo=youtube)](YOUR_VIDEO_LINK)
 
-This is a Full Stack MERN application developed for the BeyondChats internship assignment. It automates the process of content enhancement using Generative AI.
+**Live Application:** [https://beyondchats-ochre.vercel.app](https://beyondchats-ochre.vercel.app)  
+**API Backend:** [https://beyondchats-ochre.vercel.app/api/articles](https://beyondchats-ochre.vercel.app/api/articles)
 
-The system performs three key phases:
+---
 
-1.  **Scrape:** Fetches legacy blog articles from `beyondchats.com` and stores them in a MongoDB database.
-2.  **Process (AI Agent):** A robust background script searches the web (using DuckDuckGo & Puppeteer) for the latest information on the article's topic, scrapes top sources, and uses **Google Gemini 1.5** (with Groq/Llama3 fallback) to rewrite the article.
-3.  **Display:** A modern, responsive **Next.js** dashboard displays the "Original vs. AI Enhanced" versions side-by-side.
+## 📋 Table of Contents
+
+- [Overview](#-project-overview)
+- [Features](#-key-features)
+- [Architecture](#-architecture--data-flow)
+- [Tech Stack](#-tech-stack)
+- [Live Demo](#-live-demo-usage)
+- [Local Setup](#-local-setup)
+- [API Documentation](#-api-documentation)
+- [Environment Variables](#-environment-variables)
+- [Deployment](#-deployment)
+- [Challenges & Solutions](#-challenges--solutions)
+
+---
+
+## 🎯 Project Overview
+
+An intelligent content management system that automatically discovers, enhances, and presents blog articles using cutting-edge AI technology. Built for the **BeyondChats Full Stack Internship Assignment**.
+
+### **Three-Phase Workflow:**
+
+1. **📥 Scrape Phase**: Automatically discovers and extracts blog articles from beyondchats.com
+2. **🤖 AI Processing Phase**: Intelligent web search + content enhancement using Google Gemini and Groq AI
+3. **📊 Display Phase**: Side-by-side comparison of original vs. AI-enhanced content with full citations
+
+---
+
+## ✨ Key Features
+
+### 🎨 Frontend Features
+
+- **Modern Dashboard UI** with glassmorphism effects and smooth animations
+- **Real-time Status Tracking** (Pending, Completed, Failed)
+- **Side-by-Side Comparison** of original and AI-enhanced content
+- **Search & Filter** functionality for articles
+- **One-Click Downloads** - Export articles as standalone HTML files
+- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
+- **Live Processing** - Process articles directly from the dashboard
+
+### ⚙️ Backend Features
+
+- **RESTful API** with Express.js
+- **Serverless Deployment** on Vercel
+- **MongoDB Integration** for data persistence
+- **CORS Enabled** for cross-origin requests
+- **Error Handling** with detailed logging
+
+### 🧠 AI Processing Features
+
+- **Multi-Source Web Search** (Google Scholar, DuckDuckGo, Google News)
+- **Intelligent Content Extraction** using Cheerio
+- **Multi-Model AI Support** with automatic fallback:
+  - Primary: Google Gemini 2.5 Flash
+  - Secondary: Google Gemini 1.5 Pro
+  - Tertiary: Groq (Llama 3.3 70B, Llama 3.1 70B, Mixtral 8x7B)
+- **Automatic Citations** with source tracking
+- **Rate Limiting & Polite Delays** to respect server resources
 
 ---
 
 ## 🏗️ Architecture & Data Flow
 
-Below is the high-level architecture of the system:
-
 ```mermaid
 graph TD
-    subgraph Frontend
-    UI[Next.js Dashboard]
+    subgraph "🎨 Frontend Layer"
+        UI[Next.js Dashboard<br/>React + Tailwind CSS]
     end
 
-    subgraph Backend_Server
-    API[Express REST API]
-    Scraper[Web Scraper Module]
+    subgraph "🔧 Backend Layer"
+        API[Express REST API<br/>Vercel Serverless]
+        Scraper[Article Scraper<br/>Axios + Cheerio]
     end
 
-    subgraph AI_Processing_Unit
-    Script[Processor Script]
-    Search[DuckDuckGo Search Engine]
-    LLM[Gemini 1.5 / Groq AI]
+    subgraph "🤖 AI Processing Layer"
+        Controller[Article Controller]
+        Search[Multi-Source Search<br/>Scholar + DDG + News]
+        Extract[Content Extractor<br/>Cheerio Parser]
+        AI[AI Generation<br/>Gemini + Groq]
     end
 
-    DB[(MongoDB Database)]
+    DB[(MongoDB Atlas<br/>Document Store)]
 
-    %% Flows
-    User((User)) -->|1. Clicks 'Scrape New'| UI
-    UI -->|2. Request /api/scrape| API
-    API -->|3. Trigger Puppeteer| Scraper
-    Scraper -->|4. Store Pending Articles| DB
+    User((👤 User)) -->|1. Click 'Scrape'| UI
+    UI -->|2. POST /api/articles/scrape| API
+    API -->|3. Trigger Scraper| Scraper
+    Scraper -->|4. Extract Articles| Scraper
+    Scraper -->|5. Save to DB| DB
 
-    User -->|5. Runs Processor Script| Script
-    Script -->|6. Fetch 'Pending' Article| DB
-    Script -->|7. Search Topic| Search
-    Search -->|8. Scrape Top Results| Script
-    Script -->|9. Generate Content w/ Citations| LLM
-    LLM -->|10. Return HTML Content| Script
-    Script -->|11. Update Article Status| DB
+    User -->|6. Click 'Process'| UI
+    UI -->|7. POST /api/articles/process/:id| API
+    API -->|8. Fetch Article| Controller
+    Controller -->|9. Search Web| Search
+    Search -->|10. Return Sources| Controller
+    Controller -->|11. Scrape Content| Extract
+    Extract -->|12. Pass to AI| AI
+    AI -->|13. Generate Enhanced Content| Controller
+    Controller -->|14. Update Article| DB
 
-    UI -->|12. Fetch Completed Data| API
-    API -->|13. Return JSON Data| UI
+    UI -->|15. GET /api/articles| API
+    API -->|16. Return Data| DB
+    DB -->|17. Display Results| UI
+
+    style UI fill:#3b82f6,stroke:#1e40af,color:#fff
+    style API fill:#8b5cf6,stroke:#6d28d9,color:#fff
+    style DB fill:#10b981,stroke:#059669,color:#fff
+    style AI fill:#f59e0b,stroke:#d97706,color:#fff
 ```
-
-🛠️ Tech Stack
-Frontend (Phase 3)
-Framework: Next.js 14 (App Router)
-
-Styling: Tailwind CSS v4
-
-HTTP Client: Axios
-
-Features: Responsive Sidebar, Real-time status badges, HTML rendering for AI content.
-
-Backend (Phase 1)
-Runtime: Node.js
-
-Framework: Express.js
-
-Database: MongoDB (Mongoose)
-
-Scraping: Puppeteer (Headless Browser)
-
-API: RESTful Endpoints (GET, POST, PUT, DELETE)
-
-AI Processor (Phase 2)
-Logic: Standalone Node.js Script (scripts/processArticles.js)
-
-Search: DuckDuckGo HTML (No API key required, bypasses bot detection)
-
-GenAI Models: \* Primary: Google Gemini 1.5 Pro
-
-Fallback 1: Google Gemini 1.5 Flash
-
-Fallback 2: Groq (Llama3-70b)
-
-⚙️ Local Setup Instructions
-Follow these steps to run the project locally.
-
-Prerequisites
-Node.js (v18 or higher)
-
-MongoDB (Installed locally or use a MongoDB Atlas URI)
-
-1. Clone the Repository
-   Bash
-
-git clone <your-repo-url>
-cd beyondchats-assignment 2. Backend Setup
-Bash
-
-cd backend
-npm install
-
-# Create Environment Variables
-
-# Create a file named .env in the backend/ folder with the following:
-
-# PORT=5000
-
-# MONGO_URI=mongodb://localhost:27017/beyondchats_assignment
-
-# GEMINI_API_KEY=your_google_gemini_key
-
-# GROQ_API_KEY=your_groq_key (Optional)
-
-# Start the Server
-
-npm run dev
-Server runs on: http://localhost:5000
-
-3. Frontend Setup
-   Open a new terminal.
-
-Bash
-
-cd frontend
-npm install
-
-# Start Next.js
-
-npm run dev
-Frontend runs on: http://localhost:3000
-
-🤖 How to Use
-Phase 1: Scrape Articles
-Open the frontend (http://localhost:3000).
-
-Click the "+ Scrape New" button in the sidebar.
-
-The backend will visit beyondchats.com, fetch the latest blog titles, and save them to the database with a status of pending.
-
-Phase 2: Run AI Processor
-Open your terminal inside the backend folder.
-
-Run the processor script:
-
-Bash
-
-node scripts/processArticles.js
-What happens:
-
-The script picks one pending article.
-
-It searches the web for the title.
-
-It reads the top 2 search results.
-
-It sends the context to the AI to rewrite the article.
-
-It saves the result and marks the status as completed.
-
-Repeat the command to process more articles.
-
-Phase 3: View Results
-Refresh the frontend.
-
-Click on the article in the sidebar (now marked Green/Completed).
-
-View the Original Source link on the left and the AI Rewritten Article on the right, complete with references.
-
-📂 Project Structure
-Plaintext
-
-beyondchats-assignment/
-├── backend/
-│ ├── models/ # Mongoose Schemas (Article.js)
-│ ├── routes/ # API Routes
-│ ├── scripts/ # The AI Processor Script (Phase 2)
-│ ├── utils/ # The Scraper Logic
-│ ├── server.js # Entry point
-│ └── .env # Secrets (Not committed)
-│
-├── frontend/
-│ ├── src/app/ # Next.js Pages & Components
-│ ├── tailwind.config.js # (Configured for v4 via CSS)
-│ └── package.json
-│
-└── README.md # Documentation
-🛡️ License
-This project is submitted as an assignment for the BeyondChats hiring process.
 
 ---
 
-### **Final Checklist**
+## 🛠️ Tech Stack
 
-1.  **Git Ignore:** Ensure you have a `.gitignore` file in your root folder so you don't upload 500MB of node modules.
-    - **Create `.gitignore`** with this content:
-      ```text
-      node_modules
-      .env
-      .DS_Store
-      .next
-      ```
-2.  **Commit:** `git add .` -> `git commit -m "Final Submission"` -> `git push`.
-3.  **Live Link:** If you deploy it (optional but recommended for the extra 10%), update the link at the top of the README.
+### **Frontend**
 
-**You are ready to roll! Good luck with the submission!** 🚀
+| Technology   | Version | Purpose                         |
+| ------------ | ------- | ------------------------------- |
+| Next.js      | 14.x    | React framework with App Router |
+| React        | 18.x    | UI library                      |
+| Tailwind CSS | 3.x     | Utility-first styling           |
+| Axios        | 1.6.x   | HTTP client                     |
+
+### **Backend**
+
+| Technology | Version | Purpose             |
+| ---------- | ------- | ------------------- |
+| Node.js    | 18.x+   | Runtime environment |
+| Express.js | 4.x     | Web framework       |
+| MongoDB    | Latest  | NoSQL database      |
+| Mongoose   | 8.x     | MongoDB ODM         |
+| Cheerio    | 1.0.x   | HTML parsing        |
+| Axios      | 1.6.x   | HTTP requests       |
+
+### **AI & Processing**
+
+| Technology           | Purpose                    |
+| -------------------- | -------------------------- |
+| Google Generative AI | Primary content generation |
+| Groq SDK             | Fallback AI provider       |
+| Multiple Search APIs | Web content discovery      |
+
+### **Deployment**
+
+| Service       | Usage                      |
+| ------------- | -------------------------- |
+| Vercel        | Frontend + Backend hosting |
+| MongoDB Atlas | Database hosting           |
+
+---
+
+## 🌐 Live Demo Usage
+
+Visit the live application at **[https://beyondchats-ochre.vercel.app](https://beyondchats-ochre.vercel.app)**
+
+### How to Use:
+
+1. **View Existing Articles**
+
+   - Browse articles in the left sidebar
+   - See real-time status: 🟡 Pending, 🟢 Completed, 🔴 Failed
+   - Click any article to view details
+
+2. **Scrape New Articles**
+
+   - Click the "✨ Scrape New Articles" button
+   - Wait 10-15 seconds for the scraper to complete
+   - New articles appear with "Pending" status
+
+3. **Process Articles with AI**
+
+   - Select a pending article
+   - Click "Process Article Now" button
+   - Watch as AI searches the web and generates enhanced content
+   - Takes 30-60 seconds depending on search results
+
+4. **View Enhanced Content**
+
+   - Compare original source (left) vs. AI-enhanced version (right)
+   - Click reference links to verify sources
+   - Download the enhanced article as HTML
+
+5. **Manage Articles**
+   - Search articles using the search bar
+   - Delete unwanted articles
+   - Download completed articles
+
+---
+
+## 💻 Local Setup
+
+### Prerequisites
+
+- **Node.js** 18.x or higher ([Download](https://nodejs.org/))
+- **MongoDB** installed locally or [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account
+- **API Keys** (Free):
+  - [Google Gemini API Key](https://makersuite.google.com/app/apikey)
+  - [Groq API Key](https://console.groq.com/) (Optional but recommended)
+
+### 1️⃣ Clone Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/beyondchats-assignment.git
+cd beyondchats-assignment
+```
+
+### 2️⃣ Backend Setup
+
+```bash
+cd backend
+npm install
+```
+
+Create `.env` file in the `backend/` directory:
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Database
+MONGO_URI=mongodb://localhost:27017/beyondchats_assignment
+# OR for MongoDB Atlas:
+# MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/beyondchats
+
+# AI API Keys
+GEMINI_API_KEY=your_google_gemini_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+Start the backend server:
+
+```bash
+npm run dev
+# Server runs on http://localhost:5000
+```
+
+### 3️⃣ Frontend Setup
+
+Open a new terminal:
+
+```bash
+cd frontend
+npm install
+```
+
+Create `.env.local` file in the `frontend/` directory:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api/articles
+```
+
+Start the frontend:
+
+```bash
+npm run dev
+# Frontend runs on http://localhost:3000
+```
+
+### 4️⃣ Test the Application
+
+1. Open [http://localhost:3000](http://localhost:3000)
+2. Click "Scrape New Articles"
+3. Select a pending article
+4. Click "Process Article Now"
+5. Wait for AI to complete processing
+6. View the enhanced content!
+
+---
+
+## 📡 API Documentation
+
+### Base URL
+
+- **Production**: `https://beyondchats-ochre.vercel.app/api/articles`
+- **Local**: `http://localhost:5000/api/articles`
+
+### Endpoints
+
+#### 1. Get All Articles
+
+```http
+GET /api/articles
+```
+
+**Response:**
+
+```json
+[
+  {
+    "_id": "676f9a5b2c4d8e1234567890",
+    "title": "Understanding AI in Healthcare",
+    "original_url": "https://beyondchats.com/blogs/article-1",
+    "original_content": "Original article text...",
+    "updated_content": "<h2>Enhanced content</h2>...",
+    "status": "completed",
+    "references": [
+      {
+        "title": "Source Title",
+        "url": "https://source.com"
+      }
+    ],
+    "createdAt": "2024-12-28T10:30:00.000Z",
+    "updatedAt": "2024-12-28T10:35:00.000Z"
+  }
+]
+```
+
+#### 2. Get Single Article
+
+```http
+GET /api/articles/:id
+```
+
+#### 3. Scrape New Articles
+
+```http
+GET /api/articles/scrape
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Scraping complete. Added 5 new articles.",
+  "total_found": 5
+}
+```
+
+#### 4. Process Article with AI
+
+```http
+POST /api/articles/process/:id
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Article processed successfully",
+  "article": {
+    /* updated article object */
+  }
+}
+```
+
+#### 5. Update Article
+
+```http
+PUT /api/articles/:id
+```
+
+**Body:**
+
+```json
+{
+  "title": "Updated Title",
+  "status": "completed"
+}
+```
+
+#### 6. Delete Article
+
+```http
+DELETE /api/articles/:id
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Article deleted"
+}
+```
+
+---
+
+## 🔐 Environment Variables
+
+### Backend (.env)
+
+| Variable         | Description               | Required | Example                                 |
+| ---------------- | ------------------------- | -------- | --------------------------------------- |
+| `PORT`           | Server port               | No       | `5000`                                  |
+| `MONGO_URI`      | MongoDB connection string | Yes      | `mongodb://localhost:27017/beyondchats` |
+| `GEMINI_API_KEY` | Google Gemini API key     | Yes      | `AIzaSy...`                             |
+| `GROQ_API_KEY`   | Groq API key (fallback)   | No       | `gsk_...`                               |
+| `NODE_ENV`       | Environment mode          | No       | `production`                            |
+
+### Frontend (.env.local)
+
+| Variable              | Description          | Required | Example                            |
+| --------------------- | -------------------- | -------- | ---------------------------------- |
+| `NEXT_PUBLIC_API_URL` | Backend API endpoint | Yes      | `https://yourapi.com/api/articles` |
+
+---
+
+## 🚀 Deployment
+
+### Backend Deployment (Vercel)
+
+1. Push your code to GitHub
+2. Go to [Vercel Dashboard](https://vercel.com)
+3. Import your repository
+4. Add environment variables in Vercel settings
+5. Deploy!
+
+**Important Files:**
+
+- `vercel.json` - Routing configuration
+- `server.js` - Must export the Express app
+
+### Frontend Deployment (Vercel)
+
+1. Push frontend code to GitHub
+2. Import to Vercel
+3. Set `NEXT_PUBLIC_API_URL` environment variable
+4. Deploy!
+
+### Database (MongoDB Atlas)
+
+1. Create free cluster at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Whitelist IP: `0.0.0.0/0` (for Vercel)
+3. Copy connection string to `MONGO_URI`
+
+---
+
+## 🎯 Challenges & Solutions
+
+### Challenge 1: Puppeteer on Vercel
+
+**Problem:** Puppeteer doesn't work on Vercel serverless functions  
+**Solution:** Replaced with Axios + Cheerio for HTML parsing
+
+### Challenge 2: Web Search Without API Keys
+
+**Problem:** Need to search web without paid APIs  
+**Solution:** Implemented multi-source scraping (Google Scholar, DuckDuckGo Lite, Google News)
+
+### Challenge 3: AI Rate Limits
+
+**Problem:** Gemini API sometimes hits rate limits  
+**Solution:** Implemented fallback chain: Gemini 2.5 → Gemini 1.5 → Groq (3 models)
+
+### Challenge 4: Content Extraction Reliability
+
+**Problem:** Different websites have different HTML structures  
+**Solution:** Multi-strategy extraction with 10+ CSS selectors
+
+### Challenge 5: CORS Issues
+
+**Problem:** Frontend can't access backend  
+**Solution:** Configured CORS properly in Express + vercel.json headers
+
+---
+
+## 📂 Project Structure
+
+```
+beyondchats-assignment/
+├── backend/
+│   ├── config/
+│   │   └── db.js                 # MongoDB connection
+│   ├── controllers/
+│   │   └── articleController.js  # API logic + AI processing
+│   ├── models/
+│   │   └── Article.js            # Mongoose schema
+│   ├── routes/
+│   │   └── articleRoutes.js      # Express routes
+│   ├── utils/
+│   │   └── scraper.js            # Web scraping logic
+│   ├── scripts/
+│   │   ├── processArticles.js    # Standalone AI processor
+│   │   └── clean.js              # Database cleanup utility
+│   ├── .env                      # Environment variables (gitignored)
+│   ├── server.js                 # Express server entry point
+│   ├── vercel.json               # Vercel configuration
+│   └── package.json
+│
+├── frontend/
+│   ├── src/
+│   │   └── app/
+│   │       ├── page.js           # Main dashboard component
+│   │       ├── layout.js         # Root layout
+│   │       └── globals.css       # Tailwind imports
+│   ├── public/
+│   ├── .env.local                # Frontend env vars (gitignored)
+│   ├── next.config.js
+│   ├── tailwind.config.js
+│   └── package.json
+│
+└── README.md
+```
+
+---
+
+## 🧪 Testing
+
+### Manual Testing Checklist
+
+- [ ] Backend server starts without errors
+- [ ] MongoDB connects successfully
+- [ ] Scraper finds and saves articles
+- [ ] Articles appear in frontend
+- [ ] Processing button triggers AI generation
+- [ ] AI generates enhanced content with citations
+- [ ] Download feature creates valid HTML file
+- [ ] Delete functionality works
+- [ ] Search filters articles correctly
+- [ ] Responsive design works on mobile
+
+### API Testing with cURL
+
+```bash
+# Test backend health
+curl https://beyondchats-ochre.vercel.app/
+
+# Get all articles
+curl https://beyondchats-ochre.vercel.app/api/articles
+
+# Trigger scrape
+curl https://beyondchats-ochre.vercel.app/api/articles/scrape
+```
+
+---
+
+## 📈 Future Enhancements
+
+- [ ] **Batch Processing** - Process multiple articles simultaneously
+- [ ] **Scheduling** - Automatic scraping with cron jobs
+- [ ] **User Authentication** - Multi-user support
+- [ ] **Advanced Filters** - Filter by date, status, keywords
+- [ ] **Analytics Dashboard** - Processing stats and charts
+- [ ] **Export Options** - PDF, Markdown, DOCX
+- [ ] **Version History** - Track article revisions
+- [ ] **Custom AI Prompts** - User-defined enhancement styles
+
+---
+
+## 🤝 Contributing
+
+This is an assignment submission project, but suggestions are welcome!
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is submitted as part of the **BeyondChats Full Stack Internship Assignment**.
+
+---
+
+## 👨‍💻 Author
+
+**Your Name**
+
+- Portfolio: [yourportfolio.com](https://yourportfolio.com)
+- LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
+- GitHub: [@yourusername](https://github.com/yourusername)
+
+---
+
+## 🙏 Acknowledgments
+
+- **BeyondChats Team** for the assignment opportunity
+- **Google Gemini AI** for content generation
+- **Groq** for fast AI inference
+- **Vercel** for seamless deployment
+- **MongoDB** for reliable data storage
+
+---
+
+## 📞 Support
+
+For any questions or issues:
+
+- 📧 Email: your.email@example.com
+- 💬 Open an [Issue](https://github.com/yourusername/beyondchats-assignment/issues)
+
+---
+
+<div align="center">
+
+**⭐ Star this repository if you found it helpful!**
+
+Made with ❤️ for BeyondChats
+
+</div>
