@@ -12,8 +12,10 @@ export default function Dashboard() {
   const [apiError, setApiError] = useState(null);
 
   // Use Environment Variable for Vercel, fallback to localhost for development
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/articles";
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = BASE_URL.includes("/api/articles")
+    ? BASE_URL
+    : `${BASE_URL}/api/articles`;
 
   // Fetch data on load
   useEffect(() => {
