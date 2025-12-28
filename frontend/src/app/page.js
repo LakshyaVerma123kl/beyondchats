@@ -17,6 +17,9 @@ export default function Dashboard() {
     ? BASE_URL
     : `${BASE_URL}/api/articles`;
 
+  // Debug log
+  console.log("🔍 API_URL:", API_URL);
+
   // Fetch data on load
   useEffect(() => {
     fetchArticles();
@@ -42,6 +45,7 @@ export default function Dashboard() {
   const handleScrape = async () => {
     setLoading(true);
     try {
+      // Use the API_URL which already includes /api/articles
       const response = await axios.get(`${API_URL}/scrape`);
       if (response.data.success) {
         fetchArticles();
